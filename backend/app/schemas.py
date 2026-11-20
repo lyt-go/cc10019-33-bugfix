@@ -452,6 +452,24 @@ class SessionResult(BaseModel):
     session_count: int = 0
     avg_session_duration: float = 0.0
     sessions: list[dict[str, Any]] = Field(default_factory=list)
+    generated_at: int = 0
+    config_fingerprint: str = ""
+    event_time_range: dict[str, Any] = Field(default_factory=dict)
+
+
+class PathDetailEntry(BaseModel):
+    """路径明细：一条目标边可追溯到窗口内的一笔具体事件。"""
+
+    session_id: str
+    user_id: str
+    source_event: str
+    target_event: str
+    target_timestamp: int
+    window_start: int
+    window_end: int
+    in_window: bool
+    converted: bool
+    excluded_reason: str = ""
 
 
 class PathResult(BaseModel):
@@ -460,7 +478,20 @@ class PathResult(BaseModel):
     model_id: str
     start_event: str
     target_event: str
+    time_window: int = 0
+    session_split_rule: str = ""
     sankey_nodes: list[dict[str, Any]] = Field(default_factory=list)
     sankey_links: list[dict[str, Any]] = Field(default_factory=list)
     conversion_paths: list[list[str]] = Field(default_factory=list)
+    common_paths: list[dict[str, Any]] = Field(default_factory=list)
+    path_details: list[dict[str, Any]] = Field(default_factory=list)
     total_conversions: int = 0
+    total_sessions: int = 0
+    converted_sessions: int = 0
+    unconverted_sessions: int = 0
+    late_target_excluded: int = 0
+    out_of_window_events: int = 0
+    config_fingerprint: str = ""
+    generated_at: int = 0
+    stale: bool = False
+    stale_reason: str = ""

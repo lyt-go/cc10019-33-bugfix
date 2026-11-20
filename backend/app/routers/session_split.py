@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas import ActionPayload, ActionResult
 from app.services.session_split import split_sessions, get_session_result, resegment_with_strategy
+from app.services.event_stream import SessionSplitError
 from app.store import store, query_filters
 
 router = APIRouter(prefix="/api/session-split", tags=["session_split"])
@@ -36,6 +37,9 @@ def run(strategy_id: str) -> ActionResult:
     try:
         result = split_sessions(strategy_id)
         return ActionResult(ok=True, message="Split", entry=result.model_dump())
+    except SessionSplitError as e:
+        # 切割失败：未生成可确认的新产物，重试必须基于当前配置重新切割
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -54,6 +58,8 @@ def resegment(strategy_id: str, payload: dict[str, Any]) -> ActionResult:
     try:
         result = resegment_with_strategy(strategy_id, timeout)
         return ActionResult(ok=True, message="Resegmented", entry=result.model_dump())
+    except SessionSplitError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
